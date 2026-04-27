@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "NatsumeWatch",
+    "slug": "natsumewatch",
+    "scheme": "natsumewatch",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "backgroundColor": "#0a0613",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0613"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.natsumewatch.app"
+    },
+    "android": {
+      "package": "com.natsumewatch.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0613"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["INTERNET"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-video",
+      "expo-font"
+    ],
+    "extra": {
+      "apiBaseUrl": "https://natsumewatch-backend-wsjmfcnv.fly.dev"
+    }
+  }
+}
