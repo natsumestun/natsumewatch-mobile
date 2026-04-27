@@ -55,7 +55,7 @@ function pickHls(ep: DubAnilibriaEpisode): string | null {
 export function AnimeScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { idOrAlias } = route.params;
+  const { idOrAlias, initialEpisode, initialProvider, initialStudio } = route.params;
   const { user } = useAuth();
 
   const releaseQ = useQuery<Release>({
@@ -92,13 +92,23 @@ export function AnimeScreen({ route, navigation }: Props) {
         (s) =>
           s.provider === activeSource.provider && s.studio === activeSource.studio,
       );
-    if (!stillValid) setActiveSource(pickDefault(sources));
-  }, [sources, activeSource]);
+    if (!stillValid) {
+      const initial =
+        (initialProvider &&
+          sources.find(
+            (s) =>
+              s.provider === initialProvider &&
+              (!initialStudio || s.studio === initialStudio),
+          )) ||
+        pickDefault(sources);
+      setActiveSource(initial);
+    }
+  }, [sources, activeSource, initialProvider, initialStudio]);
 
   useEffect(() => {
     if (!activeSource) return;
-    setActiveEp((n) => clampOrdinal(activeSource, n));
-  }, [activeSource]);
+    setActiveEp((n) => clampOrdinal(activeSource, initialEpisode ?? n));
+  }, [activeSource, initialEpisode]);
 
   const ordinals = useMemo(
     () => activeSource?.episodes.map((e) => e.ordinal) ?? [],
@@ -131,12 +141,19 @@ export function AnimeScreen({ route, navigation }: Props) {
     if (!activeSource || !ordinals.length) return;
     const ep = activeSource.episodes.find((e) => e.ordinal === activeEp);
     if (!ep) return;
+    const releaseId = typeof release.id === "number" ? release.id : Number(release.id);
     if (activeSource.provider === "anilibria") {
-      const url = pickHls(ep as DubAnilibriaEpisode);
+      const aniEp = ep as DubAnilibriaEpisode;
+      const url = pickHls(aniEp);
       if (!url) return;
       navigation.navigate("Player", {
         title: `${release.name.main} · Эпизод ${ep.ordinal}`,
         hls: url,
+        releaseId,
+        episodeOrdinal: ep.ordinal,
+        episodeName: aniEp.name,
+        sourceProvider: activeSource.provider,
+        sourceStudio: activeSource.studio,
       });
     } else {
       const k = ep as DubKodikEpisode;
@@ -146,6 +163,11 @@ export function AnimeScreen({ route, navigation }: Props) {
       navigation.navigate("KodikPlayer", {
         title: `${release.name.main} · Эпизод ${ep.ordinal}`,
         iframeUrl: iframe,
+        releaseId,
+        episodeOrdinal: ep.ordinal,
+        episodeName: null,
+        sourceProvider: activeSource.provider,
+        sourceStudio: activeSource.studio,
       });
     }
   };
@@ -296,6 +318,41 @@ export function AnimeScreen({ route, navigation }: Props) {
         </View>
       ) : null}
 
+      <View style={styles.section}>
+        <View style={styles.tilesRow}>
+          <NavTile
+            icon="chatbubbles-outline"
+            label="Комментарии"
+            onPress={() =>
+              navigation.navigate("Comments", {
+                releaseId: Number(release.id),
+                title: release.name.main,
+              })
+            }
+          />
+          <NavTile
+            icon="star-outline"
+            label="Рецензии"
+            onPress={() =>
+              navigation.navigate("Reviews", {
+                releaseId: Number(release.id),
+                title: release.name.main,
+              })
+            }
+          />
+          <NavTile
+            icon="cloud-download-outline"
+            label="Торренты"
+            onPress={() =>
+              navigation.navigate("Torrents", {
+                idOrAlias: String(release.alias || release.id),
+                title: release.name.main,
+              })
+            }
+          />
+        </View>
+      </View>
+
       {dubsQ.isLoading ? (
         <View style={[styles.section, { alignItems: "center" }]}>
           <ActivityIndicator color={colors.brand[500]} />
@@ -330,6 +387,23 @@ function Row({ label, value }: { label: string; value: string }) {
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowValue}>{value}</Text>
     </View>
+  );
+}
+
+function NavTile({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={styles.tile} onPress={onPress}>
+      <Ionicons name={icon} size={22} color={colors.brand[400]} />
+      <Text style={styles.tileText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -509,5 +583,25 @@ const styles = StyleSheet.create({
   muted: {
     color: colors.text.muted,
     fontSize: 13,
+  },
+  tilesRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  tile: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    backgroundColor: colors.bg.panel,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+    borderRadius: radius.md,
+  },
+  tileText: {
+    color: colors.text.primary,
+    fontSize: 12,
+    fontWeight: "600",
   },
 });

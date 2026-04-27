@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,14 +14,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import * as ImagePicker from "expo-image-picker";
 
-import { apiFetch, resolveMediaUrl, API_BASE } from "../api/client";
+import { apiFetch, resolveMediaUrl, API_BASE, uploadMultipart } from "../api/client";
 import { useAuth } from "../store/auth";
 import {
   LIST_STATUSES,
   STATUS_LABELS,
-  type ListStatus,
   type ListStatusCount,
+  type User,
 } from "../api/types";
 import { colors, radius, spacing } from "../theme/colors";
 import type { RootStackParamList } from "../navigation/types";
@@ -29,8 +31,96 @@ export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const stackNav =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, setUser } = useAuth();
   const qc = useQueryClient();
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+
+  async function pickAndUpload(kind: "avatar" | "banner") {
+    const aspect: [number, number] = kind === "avatar" ? [1, 1] : [3, 1];
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert("Нужен доступ к фото", "Разрешите доступ в настройках.");
+      return;
+    }
+    const r = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect,
+      quality: 0.9,
+    });
+    if (r.canceled || !r.assets[0]) return;
+    const a = r.assets[0];
+    const uri = a.uri;
+    const filename = a.fileName || `${kind}-${Date.now()}.jpg`;
+    const mime = a.mimeType || "image/jpeg";
+    const setBusy = kind === "avatar" ? setUploadingAvatar : setUploadingBanner;
+    setBusy(true);
+    try {
+      const updated = await uploadMultipart<User>(
+        kind === "avatar" ? "/me/avatar" : "/me/banner",
+        "file",
+        uri,
+        filename,
+        mime,
+      );
+      setUser(updated);
+    } catch (e) {
+      Alert.alert("Не удалось загрузить", (e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeMedia(kind: "avatar" | "banner") {
+    const setBusy = kind === "avatar" ? setUploadingAvatar : setUploadingBanner;
+    setBusy(true);
+    try {
+      const updated = await apiFetch<User>(
+        kind === "avatar" ? "/me/avatar" : "/me/banner",
+        { method: "DELETE" },
+      );
+      setUser(updated);
+    } catch (e) {
+      Alert.alert("Не удалось удалить", (e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function onAvatarPress() {
+    if (!user) return;
+    Alert.alert("Аватар", undefined, [
+      { text: "Загрузить новый", onPress: () => pickAndUpload("avatar") },
+      ...(user.avatar_url
+        ? [
+            {
+              text: "Удалить",
+              style: "destructive" as const,
+              onPress: () => removeMedia("avatar"),
+            },
+          ]
+        : []),
+      { text: "Отмена", style: "cancel" as const },
+    ]);
+  }
+
+  function onBannerPress() {
+    if (!user) return;
+    Alert.alert("Баннер", undefined, [
+      { text: "Загрузить новый", onPress: () => pickAndUpload("banner") },
+      ...(user.banner_url
+        ? [
+            {
+              text: "Удалить",
+              style: "destructive" as const,
+              onPress: () => removeMedia("banner"),
+            },
+          ]
+        : []),
+      { text: "Отмена", style: "cancel" as const },
+    ]);
+  }
 
   const countsQ = useQuery<ListStatusCount[]>({
     queryKey: ["my-list-counts"],
@@ -96,13 +186,22 @@ export function ProfileScreen() {
       style={styles.scroll}
       contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
     >
-      <View style={styles.bannerWrap}>
+      <Pressable style={styles.bannerWrap} onPress={onBannerPress}>
         {banner ? (
           <Image source={{ uri: banner }} style={StyleSheet.absoluteFill} contentFit="cover" />
         ) : (
           <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.bg.panel }]} />
         )}
         <View style={styles.bannerFade} pointerEvents="none" />
+        {uploadingBanner ? (
+          <View style={styles.uploadOverlay} pointerEvents="none">
+            <ActivityIndicator color="#fff" />
+          </View>
+        ) : null}
+        <View style={styles.bannerEditHint} pointerEvents="none">
+          <Ionicons name="image-outline" size={14} color="#fff" />
+          <Text style={styles.bannerEditText}>Изменить баннер</Text>
+        </View>
         <Pressable
           style={[styles.logoutBtn, { top: insets.top + 8 }]}
           onPress={onLogout}
@@ -110,10 +209,10 @@ export function ProfileScreen() {
         >
           <Ionicons name="log-out-outline" size={20} color="#fff" />
         </Pressable>
-      </View>
+      </Pressable>
 
       <View style={styles.profileHead}>
-        <View style={styles.avatarWrap}>
+        <Pressable style={styles.avatarWrap} onPress={onAvatarPress}>
           {avatar ? (
             <Image source={{ uri: avatar }} style={styles.avatar} contentFit="cover" />
           ) : (
@@ -123,10 +222,37 @@ export function ProfileScreen() {
               </Text>
             </View>
           )}
-        </View>
+          {uploadingAvatar ? (
+            <View style={[styles.uploadOverlay, { borderRadius: 40 }]}>
+              <ActivityIndicator color="#fff" />
+            </View>
+          ) : (
+            <View style={styles.avatarBadge}>
+              <Ionicons name="camera" size={12} color="#fff" />
+            </View>
+          )}
+        </Pressable>
         <Text style={styles.username}>{user.username}</Text>
         {user.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
         <Text style={styles.email}>{user.email}</Text>
+      </View>
+
+      <View style={styles.linksRow}>
+        <ProfileLink
+          icon="time-outline"
+          label="История"
+          onPress={() => stackNav.navigate("History")}
+        />
+        <ProfileLink
+          icon="bar-chart-outline"
+          label="Статистика"
+          onPress={() => stackNav.navigate("Stats")}
+        />
+        <ProfileLink
+          icon="people-outline"
+          label="Друзья"
+          onPress={() => stackNav.navigate("Friends")}
+        />
       </View>
 
       <Text style={styles.sectionTitle}>Мои списки</Text>
@@ -145,6 +271,23 @@ export function ProfileScreen() {
 
       <Text style={styles.serverHint}>API: {API_BASE.replace(/^https?:\/\//, "")}</Text>
     </ScrollView>
+  );
+}
+
+function ProfileLink({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={styles.linkCard} onPress={onPress}>
+      <Ionicons name={icon} size={22} color={colors.brand[400]} />
+      <Text style={styles.linkLabel}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -298,6 +441,63 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontSize: 22,
     fontWeight: "800",
+  },
+  uploadOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bannerEditHint: {
+    position: "absolute",
+    bottom: 8,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  bannerEditText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  avatarBadge: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.brand[500],
+    borderWidth: 2,
+    borderColor: colors.bg.base,
+  },
+  linksRow: {
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: spacing.lg,
+    marginTop: 16,
+  },
+  linkCard: {
+    flex: 1,
+    backgroundColor: colors.bg.panel,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    alignItems: "center",
+    gap: 6,
+  },
+  linkLabel: {
+    color: colors.text.primary,
+    fontSize: 12,
+    fontWeight: "600",
   },
   serverHint: {
     marginTop: 24,

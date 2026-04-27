@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,20 +15,63 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useQueryClient } from "@tanstack/react-query";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 
+import { apiFetch, API_BASE } from "../api/client";
 import { useAuth } from "../store/auth";
+import type { AuthProviders } from "../api/types";
 import { colors, radius, spacing } from "../theme/colors";
 import type { RootStackParamList } from "../navigation/types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
+WebBrowser.maybeCompleteAuthSession();
+
 export function LoginScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const login = useAuth((s) => s.login);
+  const loginWithToken = useAuth((s) => s.loginWithToken);
   const qc = useQueryClient();
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [providers, setProviders] = useState<AuthProviders>({});
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<AuthProviders>("/auth/providers", { skipAuth: true })
+      .then((p) => setProviders(p || {}))
+      .catch(() => setProviders({}));
+  }, []);
+
+  async function startOAuth(provider: string) {
+    setOauthLoading(provider);
+    try {
+      const redirect = Linking.createURL("auth-callback");
+      const startUrl = `${API_BASE}/api/auth/${provider}/start?return_to=${encodeURIComponent(redirect)}`;
+      const result = await WebBrowser.openAuthSessionAsync(startUrl, redirect);
+      if (result.type === "success" && result.url) {
+        const { queryParams } = Linking.parse(result.url);
+        const token =
+          (queryParams?.token as string) ||
+          (queryParams?.access_token as string) ||
+          "";
+        if (!token) {
+          throw new Error("Сервер не вернул токен");
+        }
+        await loginWithToken(token);
+        qc.invalidateQueries();
+        navigation.goBack();
+      } else if (result.type !== "cancel" && result.type !== "dismiss") {
+        throw new Error("Не удалось завершить вход");
+      }
+    } catch (e) {
+      Alert.alert(`${provider} OAuth`, (e as Error).message);
+    } finally {
+      setOauthLoading(null);
+    }
+  }
 
   async function onSubmit() {
     if (!emailOrUsername || !password) {
@@ -46,6 +89,8 @@ export function LoginScreen({ navigation }: Props) {
       setSubmitting(false);
     }
   }
+
+  const enabledProviders = Object.entries(providers).filter(([, on]) => on);
 
   return (
     <KeyboardAvoidingView
@@ -107,9 +152,52 @@ export function LoginScreen({ navigation }: Props) {
         >
           <Text style={styles.linkText}>Нет аккаунта? Зарегистрироваться</Text>
         </Pressable>
+
+        {enabledProviders.length ? (
+          <View style={styles.oauthBlock}>
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>или</Text>
+              <View style={styles.divider} />
+            </View>
+            {enabledProviders.map(([provider]) => (
+              <Pressable
+                key={provider}
+                style={styles.oauthBtn}
+                disabled={oauthLoading !== null}
+                onPress={() => startOAuth(provider)}
+              >
+                {oauthLoading === provider ? (
+                  <ActivityIndicator color={colors.text.primary} />
+                ) : (
+                  <>
+                    <Ionicons
+                      name={
+                        provider === "google"
+                          ? "logo-google"
+                          : provider === "discord"
+                            ? "logo-discord"
+                            : "log-in-outline"
+                      }
+                      size={18}
+                      color={colors.text.primary}
+                    />
+                    <Text style={styles.oauthBtnText}>
+                      Войти через {capitalize(provider)}
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
+}
+
+function capitalize(s: string) {
+  return s ? s[0].toUpperCase() + s.slice(1) : s;
 }
 
 const styles = StyleSheet.create({
@@ -165,5 +253,42 @@ const styles = StyleSheet.create({
   linkText: {
     color: colors.text.muted,
     fontSize: 13,
+  },
+  oauthBlock: {
+    marginTop: 28,
+    gap: 10,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 6,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.bg.border,
+  },
+  dividerText: {
+    color: colors.text.faint,
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  oauthBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+    backgroundColor: colors.bg.panel,
+  },
+  oauthBtnText: {
+    color: colors.text.primary,
+    fontWeight: "600",
+    fontSize: 14,
   },
 });

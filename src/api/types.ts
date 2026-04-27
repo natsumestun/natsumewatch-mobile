@@ -223,3 +223,133 @@ export type AuthResponse = {
   access_token: string;
   user: User;
 };
+
+/* === Comments / Reviews / Rating === */
+
+export type UserPublic = {
+  id: number;
+  username: string;
+  friend_id?: string | null;
+  avatar_url?: string | null;
+  banner_url?: string | null;
+  bio?: string | null;
+  last_seen_at?: string | null;
+  created_at: string;
+};
+
+export type CommentOut = {
+  id: number;
+  body: string;
+  parent_id: number | null;
+  created_at: string;
+  user: UserPublic;
+  like_count?: number;
+  score?: number;
+  liked_by_me?: boolean;
+  vote_by_me?: number;
+};
+
+export type ReviewOut = {
+  id: number;
+  title: string;
+  body: string;
+  score: number;
+  created_at: string;
+  user: UserPublic;
+};
+
+export type RatingSummary = {
+  release_id: number;
+  average: number | null;
+  votes: number;
+  my_score: number | null;
+};
+
+/* === Friends / Messages === */
+
+export type FriendOut = {
+  friendship_id: number;
+  user: UserPublic;
+  last_message?: string | null;
+  last_message_at?: string | null;
+  unread?: number;
+};
+
+export type FriendRequestOut = {
+  id: number;
+  user: UserPublic;
+  created_at: string;
+};
+
+export type MessageOut = {
+  id: number;
+  from_user_id: number;
+  to_user_id: number;
+  body: string;
+  created_at: string;
+  read_at?: string | null;
+};
+
+export type ConversationResponse = {
+  peer: UserPublic;
+  messages: MessageOut[];
+};
+
+/* === History / Stats === */
+
+export type HistoryEntryOut = {
+  id: number;
+  release_id: number;
+  release_alias: string | null;
+  release_title: string | null;
+  release_poster: string | null;
+  episode_ordinal: number;
+  episode_name: string | null;
+  source_provider: string | null;
+  source_studio: string | null;
+  watched_at: string;
+};
+
+export type StatsBucket = { label: string; count: number };
+
+export type ProfileStats = {
+  total_watched: number;
+  total_watching: number;
+  total_planned: number;
+  total_postponed: number;
+  total_dropped: number;
+  total_favorite: number;
+  by_genre: StatsBucket[];
+  by_type: StatsBucket[];
+  by_year: StatsBucket[];
+};
+
+/* === Torrents === */
+
+export type Torrent = {
+  id: number;
+  label: string | null;
+  quality: string | null;
+  type: string | null;
+  codec: string | null;
+  size: number | null;
+  seeders: number | null;
+  leechers: number | null;
+  completed_times: number | null;
+  magnet: string | null;
+  filename: string | null;
+  episodes: string | null;
+  updated_at: string | null;
+  download_url: string | null;
+  is_hardsub: boolean | null;
+};
+
+export type TorrentsResponse = {
+  release_id: number | null;
+  alias: string | null;
+  torrents: Torrent[];
+};
+
+/* === OAuth === */
+
+export type AuthProviders = Record<string, boolean>;
