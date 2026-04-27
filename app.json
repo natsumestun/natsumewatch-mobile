@@ -27,7 +27,8 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "INTERNET"
+        "android.permission.INTERNET",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -46,7 +47,11 @@
       ]
     ],
     "extra": {
-      "apiBaseUrl": "https://natsumewatch-backend-wsjmfcnv.fly.dev"
-    }
+      "apiBaseUrl": "https://natsumewatch-backend-wsjmfcnv.fly.dev",
+      "eas": {
+        "projectId": "b93ec29f-acfb-4fa6-997a-d6be6511a9b4"
+      }
+    },
+    "owner": "natsumestun"
   }
 }
