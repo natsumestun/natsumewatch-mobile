@@ -10,6 +10,8 @@ type AuthState = {
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  setUser: (user: User) => void;
+  loginWithToken: (token: string) => Promise<void>;
 };
 
 export const useAuth = create<AuthState>((set, get) => ({
@@ -55,6 +57,20 @@ export const useAuth = create<AuthState>((set, get) => ({
     } catch {
       await setToken(null);
       set({ user: null });
+    }
+  },
+  setUser(user: User) {
+    set({ user });
+  },
+  async loginWithToken(token: string) {
+    await setToken(token);
+    try {
+      const me = await apiFetch<User>("/auth/me");
+      set({ user: me });
+    } catch {
+      await setToken(null);
+      set({ user: null });
+      throw new Error("Не удалось получить профиль после OAuth");
     }
   },
 }));

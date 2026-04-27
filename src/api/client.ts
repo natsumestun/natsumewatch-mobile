@@ -79,3 +79,47 @@ export function resolveMediaUrl(url: string | null | undefined): string | null {
   if (url.startsWith("/")) return `${API_BASE}${url}`;
   return url;
 }
+
+/** Upload a file via multipart/form-data. The file is provided as a local URI. */
+export async function uploadMultipart<T = unknown>(
+  path: string,
+  fieldName: string,
+  fileUri: string,
+  filename: string,
+  mimeType: string,
+): Promise<T> {
+  const form = new FormData();
+  form.append(fieldName, {
+    uri: fileUri,
+    name: filename,
+    type: mimeType,
+  } as unknown as Blob);
+
+  const headers: Record<string, string> = {};
+  const t = await getToken();
+  if (t) headers["Authorization"] = `Bearer ${t}`;
+
+  const url = path.startsWith("http") ? path : `${API_PREFIX}${path}`;
+  const res = await fetch(url, {
+    method: "POST",
+    body: form as unknown as BodyInit,
+    headers,
+  });
+  let data: unknown = null;
+  const text = await res.text();
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+  }
+  if (!res.ok) {
+    const detail =
+      data && typeof data === "object" && "detail" in data
+        ? String((data as { detail: unknown }).detail)
+        : res.statusText;
+    throw new ApiError(res.status, detail, data);
+  }
+  return data as T;
+}

@@ -14,3 +14,10 @@ export function posterUrl(
   if (/^https?:\/\//.test(path)) return path;
   return `${ANILIBRIA_BASE}${path}`;
 }
+
+/** Resolve a bare poster path string (often returned by /me endpoints). */
+export function posterAbs(p: string | null | undefined): string {
+  if (!p) return "";
+  if (/^https?:\/\//.test(p)) return p;
+  return `${ANILIBRIA_BASE}${p}`;
+}

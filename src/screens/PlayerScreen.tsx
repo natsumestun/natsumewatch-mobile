@@ -6,6 +6,8 @@ import * as ScreenOrientation from "expo-screen-orientation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
+import { apiFetch } from "../api/client";
+import { useAuth } from "../store/auth";
 import { spacing } from "../theme/colors";
 import type { RootStackParamList } from "../navigation/types";
 
@@ -13,7 +15,17 @@ type Props = NativeStackScreenProps<RootStackParamList, "Player">;
 
 export function PlayerScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { hls, title, initialPosition } = route.params;
+  const {
+    hls,
+    title,
+    initialPosition,
+    releaseId,
+    episodeOrdinal,
+    episodeName,
+    sourceProvider,
+    sourceStudio,
+  } = route.params;
+  const me = useAuth((s) => s.user);
 
   const player = useVideoPlayer({ uri: hls }, (p) => {
     p.loop = false;
@@ -40,6 +52,20 @@ export function PlayerScreen({ route, navigation }: Props) {
       })();
     };
   }, []);
+
+  useEffect(() => {
+    if (!me || !releaseId || !episodeOrdinal) return;
+    apiFetch("/me/history", {
+      method: "POST",
+      body: JSON.stringify({
+        release_id: releaseId,
+        episode_ordinal: episodeOrdinal,
+        episode_name: episodeName ?? null,
+        source_provider: sourceProvider ?? null,
+        source_studio: sourceStudio ?? null,
+      }),
+    }).catch(() => undefined);
+  }, [me, releaseId, episodeOrdinal, episodeName, sourceProvider, sourceStudio]);
 
   return (
     <View style={styles.container}>

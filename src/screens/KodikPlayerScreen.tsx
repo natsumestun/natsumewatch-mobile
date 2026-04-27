@@ -6,6 +6,8 @@ import * as ScreenOrientation from "expo-screen-orientation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
+import { apiFetch } from "../api/client";
+import { useAuth } from "../store/auth";
 import { spacing } from "../theme/colors";
 import type { RootStackParamList } from "../navigation/types";
 
@@ -13,7 +15,30 @@ type Props = NativeStackScreenProps<RootStackParamList, "KodikPlayer">;
 
 export function KodikPlayerScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { iframeUrl, title } = route.params;
+  const {
+    iframeUrl,
+    title,
+    releaseId,
+    episodeOrdinal,
+    episodeName,
+    sourceProvider,
+    sourceStudio,
+  } = route.params;
+  const me = useAuth((s) => s.user);
+
+  useEffect(() => {
+    if (!me || !releaseId || !episodeOrdinal) return;
+    apiFetch("/me/history", {
+      method: "POST",
+      body: JSON.stringify({
+        release_id: releaseId,
+        episode_ordinal: episodeOrdinal,
+        episode_name: episodeName ?? null,
+        source_provider: sourceProvider ?? null,
+        source_studio: sourceStudio ?? null,
+      }),
+    }).catch(() => undefined);
+  }, [me, releaseId, episodeOrdinal, episodeName, sourceProvider, sourceStudio]);
 
   useEffect(() => {
     void (async () => {

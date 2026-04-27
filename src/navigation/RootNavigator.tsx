@@ -6,6 +6,13 @@ import { KodikPlayerScreen } from "../screens/KodikPlayerScreen";
 import { LoginScreen } from "../screens/LoginScreen";
 import { RegisterScreen } from "../screens/RegisterScreen";
 import { MyListScreen } from "../screens/MyListScreen";
+import { HistoryScreen } from "../screens/HistoryScreen";
+import { StatsScreen } from "../screens/StatsScreen";
+import { FriendsScreen } from "../screens/FriendsScreen";
+import { ChatScreen } from "../screens/ChatScreen";
+import { TorrentsScreen } from "../screens/TorrentsScreen";
+import { CommentsScreen } from "../screens/CommentsScreen";
+import { ReviewsScreen } from "../screens/ReviewsScreen";
 import type { RootStackParamList } from "./types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -36,6 +43,13 @@ export function RootNavigator() {
         options={{ presentation: "modal" }}
       />
       <Stack.Screen name="MyList" component={MyListScreen} />
+      <Stack.Screen name="History" component={HistoryScreen} />
+      <Stack.Screen name="Stats" component={StatsScreen} />
+      <Stack.Screen name="Friends" component={FriendsScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
+      <Stack.Screen name="Torrents" component={TorrentsScreen} />
+      <Stack.Screen name="Comments" component={CommentsScreen} />
+      <Stack.Screen name="Reviews" component={ReviewsScreen} />
     </Stack.Navigator>
   );
 }

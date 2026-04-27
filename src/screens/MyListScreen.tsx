@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { apiFetch } from "../api/client";
+import { posterAbs } from "../api/posters";
 import { STATUS_LABELS, type ListItem } from "../api/types";
 import { colors, radius, spacing } from "../theme/colors";
 import type { RootStackParamList } from "../navigation/types";
@@ -92,11 +93,6 @@ export function MyListScreen({ route, navigation }: Props) {
       )}
     </View>
   );
-}
-
-function posterAbs(p: string): string {
-  if (/^https?:\/\//.test(p)) return p;
-  return `https://anilibria.top${p}`;
 }
 
 const styles = StyleSheet.create({
