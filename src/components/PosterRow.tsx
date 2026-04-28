@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text.primary,
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "700",
     paddingHorizontal: spacing.lg,
   },
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   loading: {
-    height: 210,
+    height: 180,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -18,13 +18,13 @@ export function TabNavigator() {
         tabBarStyle: {
           backgroundColor: colors.bg.panel,
           borderTopColor: colors.bg.border,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 56,
+          paddingBottom: 6,
+          paddingTop: 6,
         },
         tabBarActiveTintColor: colors.brand[500],
         tabBarInactiveTintColor: colors.text.muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
       }}
     >
       <Tab.Screen
@@ -32,8 +32,8 @@ export function TabNavigator() {
         component={HomeScreen as never}
         options={{
           title: "Главная",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="home-outline" size={20} color={color} />
           ),
         }}
       />
@@ -42,8 +42,8 @@ export function TabNavigator() {
         component={CatalogScreen}
         options={{
           title: "Каталог",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="grid-outline" size={20} color={color} />
           ),
         }}
       />
@@ -52,8 +52,8 @@ export function TabNavigator() {
         component={RandomScreen}
         options={{
           title: "Случайное",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="shuffle" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="shuffle-outline" size={20} color={color} />
           ),
         }}
       />
@@ -62,8 +62,8 @@ export function TabNavigator() {
         component={ProfileScreen}
         options={{
           title: "Профиль",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person-outline" size={20} color={color} />
           ),
         }}
       />

@@ -20,6 +20,7 @@ import { apiFetch } from "../api/client";
 import type { ConversationResponse, MessageOut } from "../api/types";
 import { useAuth } from "../store/auth";
 import { colors, radius, spacing } from "../theme/colors";
+import { markChatSeen } from "../utils/socialNotifications";
 import type { RootStackParamList } from "../navigation/types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
@@ -63,8 +64,12 @@ export function ChatScreen({ route, navigation }: Props) {
           listRef.current?.scrollToEnd({ animated: false });
         } catch {}
       });
+      void markChatSeen(
+        username,
+        messages.map((m) => m.id),
+      );
     }
-  }, [messages.length]);
+  }, [messages.length, username]);
 
   return (
     <KeyboardAvoidingView
@@ -150,7 +155,8 @@ export function ChatScreen({ route, navigation }: Props) {
 }
 
 function formatTime(iso: string) {
-  const d = new Date(iso);
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
+  const d = new Date(hasTz ? iso : `${iso}Z`);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -13,6 +13,12 @@ import { RootNavigator } from "./src/navigation/RootNavigator";
 import { useAuth } from "./src/store/auth";
 import { colors } from "./src/theme/colors";
 import { Loading } from "./src/components/Loading";
+import {
+  configureNotificationHandler,
+  syncPushTokenWithBackend,
+} from "./src/utils/notifications";
+import { checkSubscriptionsForNewEpisodes } from "./src/utils/episodeSubscriptions";
+import { pollSocialOnForeground } from "./src/utils/socialNotifications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,8 +41,11 @@ const navTheme = {
   },
 };
 
+configureNotificationHandler();
+
 export default function App() {
   const init = useAuth((s) => s.init);
+  const user = useAuth((s) => s.user);
   const [fontsLoaded] = useFonts({
     Rubik_400Regular,
     Rubik_600SemiBold,
@@ -47,6 +56,24 @@ export default function App() {
   useEffect(() => {
     void init();
   }, [init]);
+
+  useEffect(() => {
+    if (!user) return;
+    void syncPushTokenWithBackend();
+    void checkSubscriptionsForNewEpisodes();
+    void pollSocialOnForeground(user.id);
+  }, [user]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        void checkSubscriptionsForNewEpisodes();
+        const me = useAuth.getState().user;
+        if (me) void pollSocialOnForeground(me.id);
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(colors.bg.base).catch(() => undefined);

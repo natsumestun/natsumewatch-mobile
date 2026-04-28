@@ -247,6 +247,11 @@ export function ProfileScreen() {
           label="Друзья"
           onPress={() => stackNav.navigate("Friends")}
         />
+        <ProfileLink
+          icon="notifications-outline"
+          label="Уведомления"
+          onPress={() => stackNav.navigate("Notifications")}
+        />
       </View>
 
       <Text style={styles.sectionTitle}>Мои списки</Text>

@@ -24,6 +24,11 @@ export function HomeScreen({ navigation }: Props) {
       <Hero onSelect={open} />
       <View style={styles.rows}>
         <PosterRow
+          title="Набирает популярность"
+          endpoint="/anime/catalog?limit=12&sorting=RATING_DESC&publish_statuses=IS_ONGOING"
+          onSelect={open}
+        />
+        <PosterRow
           title="Свежие релизы"
           endpoint="/anime/latest?limit=12"
           onSelect={open}
@@ -34,8 +39,8 @@ export function HomeScreen({ navigation }: Props) {
           onSelect={open}
         />
         <PosterRow
-          title="Прошлый сезон"
-          endpoint="/anime/catalog?from_year=2024&to_year=2025&limit=12&sorting=FRESH_AT_DESC"
+          title="Топ по рейтингу"
+          endpoint="/anime/catalog?limit=12&sorting=RATING_DESC"
           onSelect={open}
         />
       </View>
@@ -52,7 +57,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   rows: {
-    gap: spacing.xl,
-    paddingTop: spacing.xl,
+    gap: spacing.lg,
+    paddingTop: spacing.lg,
   },
 });

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { apiFetch, setToken } from "../api/client";
 import type { AuthResponse, User } from "../api/types";
+import { clearPushToken } from "../utils/notifications";
 
 type AuthState = {
   user: User | null;
@@ -46,6 +47,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     set({ user: data.user });
   },
   async logout() {
+    await clearPushToken().catch(() => undefined);
     await setToken(null);
     set({ user: null });
   },

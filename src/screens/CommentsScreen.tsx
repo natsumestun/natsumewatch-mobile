@@ -21,6 +21,7 @@ import { apiFetch, resolveMediaUrl } from "../api/client";
 import { useAuth } from "../store/auth";
 import type { CommentOut } from "../api/types";
 import { colors, radius, spacing } from "../theme/colors";
+import { formatDateTime, parseServerTs } from "../utils/format";
 import type { RootStackParamList } from "../navigation/types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Comments">;
@@ -39,7 +40,7 @@ function buildTree(items: CommentOut[]): ThreadNode[] {
     }
   }
   const sortRecursive = (n: ThreadNode[]) => {
-    n.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    n.sort((a, b) => parseServerTs(a.created_at) - parseServerTs(b.created_at));
     n.forEach((c) => sortRecursive(c.children));
   };
   sortRecursive(roots);
@@ -93,7 +94,7 @@ export function CommentsScreen({ route, navigation }: Props) {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { paddingTop: insets.top }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
@@ -223,7 +224,7 @@ function CommentTree({
         )}
         <View style={{ flex: 1 }}>
           <Text style={styles.username}>{node.user.username}</Text>
-          <Text style={styles.timestamp}>{new Date(node.created_at).toLocaleString()}</Text>
+          <Text style={styles.timestamp}>{formatDateTime(node.created_at)}</Text>
         </View>
       </View>
       <Text style={styles.body}>{node.body}</Text>

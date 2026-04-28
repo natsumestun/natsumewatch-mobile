@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { TouchableScale } from "./TouchableScale";
 import { colors, radius } from "../theme/colors";
 import { posterUrl } from "../api/posters";
 import type { ReleaseSummary } from "../api/types";
@@ -10,11 +11,11 @@ export type PosterCardProps = {
   width?: number;
 };
 
-export function PosterCard({ release: r, onPress, width = 140 }: PosterCardProps) {
+export function PosterCard({ release: r, onPress, width = 120 }: PosterCardProps) {
   const height = Math.round((width * 3) / 2);
   const url = posterUrl(r.poster, "preview") || posterUrl(r.poster, "src");
   return (
-    <Pressable onPress={onPress} style={[styles.wrap, { width, height }]}>
+    <TouchableScale onPress={onPress} style={[styles.wrap, { width, height }]}>
       <Image
         source={url ? { uri: url } : undefined}
         style={styles.img}
@@ -43,7 +44,7 @@ export function PosterCard({ release: r, onPress, width = 140 }: PosterCardProps
           ) : null}
         </View>
       </View>
-    </Pressable>
+    </TouchableScale>
   );
 }
 

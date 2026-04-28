@@ -46,4 +46,5 @@ export type RootStackParamList = {
   Torrents: { idOrAlias: string; title?: string };
   Comments: { releaseId: number; title?: string };
   Reviews: { releaseId: number; title?: string };
+  Notifications: undefined;
 };

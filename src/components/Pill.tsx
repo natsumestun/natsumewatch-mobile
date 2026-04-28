@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
+import { TouchableScale } from "./TouchableScale";
 import { colors, radius } from "../theme/colors";
 
 export function Pill({
@@ -11,14 +12,15 @@ export function Pill({
   onPress?: () => void;
 }) {
   return (
-    <Pressable
+    <TouchableScale
       onPress={onPress}
       style={[styles.wrap, active && styles.active]}
+      scaleTo={0.94}
     >
       <Text style={[styles.text, active && styles.activeText]} numberOfLines={1}>
         {label}
       </Text>
-    </Pressable>
+    </TouchableScale>
   );
 }
 
