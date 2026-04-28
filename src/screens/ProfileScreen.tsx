@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -35,6 +36,7 @@ export function ProfileScreen() {
   const qc = useQueryClient();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState<null | "avatar" | "banner">(null);
 
   async function pickAndUpload(kind: "avatar" | "banner") {
     const aspect: [number, number] = kind === "avatar" ? [1, 1] : [3, 1];
@@ -90,36 +92,12 @@ export function ProfileScreen() {
 
   function onAvatarPress() {
     if (!user) return;
-    Alert.alert("Аватар", undefined, [
-      { text: "Загрузить новый", onPress: () => pickAndUpload("avatar") },
-      ...(user.avatar_url
-        ? [
-            {
-              text: "Удалить",
-              style: "destructive" as const,
-              onPress: () => removeMedia("avatar"),
-            },
-          ]
-        : []),
-      { text: "Отмена", style: "cancel" as const },
-    ]);
+    setPickerOpen("avatar");
   }
 
   function onBannerPress() {
     if (!user) return;
-    Alert.alert("Баннер", undefined, [
-      { text: "Загрузить новый", onPress: () => pickAndUpload("banner") },
-      ...(user.banner_url
-        ? [
-            {
-              text: "Удалить",
-              style: "destructive" as const,
-              onPress: () => removeMedia("banner"),
-            },
-          ]
-        : []),
-      { text: "Отмена", style: "cancel" as const },
-    ]);
+    setPickerOpen("banner");
   }
 
   const countsQ = useQuery<ListStatusCount[]>({
@@ -181,7 +159,23 @@ export function ProfileScreen() {
     ]);
   };
 
+  const pickerHasMedia =
+    pickerOpen === "avatar"
+      ? Boolean(user.avatar_url)
+      : pickerOpen === "banner"
+      ? Boolean(user.banner_url)
+      : false;
+  const pickerTitle =
+    pickerOpen === "avatar" ? "Аватар" : pickerOpen === "banner" ? "Баннер" : "";
+  const pickerHint =
+    pickerOpen === "avatar"
+      ? "Квадратная картинка, до 8 МБ"
+      : pickerOpen === "banner"
+      ? "Широкая картинка 3:1, до 8 МБ"
+      : "";
+
   return (
+    <>
     <ScrollView
       style={styles.scroll}
       contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
@@ -271,6 +265,94 @@ export function ProfileScreen() {
 
       <Text style={styles.serverHint}>API: {API_BASE.replace(/^https?:\/\//, "")}</Text>
     </ScrollView>
+
+    <Modal
+      animationType="slide"
+      transparent
+      visible={pickerOpen !== null}
+      onRequestClose={() => setPickerOpen(null)}
+    >
+      <Pressable
+        style={styles.sheetBackdrop}
+        onPress={() => setPickerOpen(null)}
+      >
+        <Pressable
+          style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}
+          onPress={() => undefined}
+        >
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>{pickerTitle}</Text>
+          {pickerHint ? (
+            <Text style={styles.sheetHint}>{pickerHint}</Text>
+          ) : null}
+          <Pressable
+            style={styles.sheetItem}
+            onPress={() => {
+              const k = pickerOpen;
+              setPickerOpen(null);
+              if (k) void pickAndUpload(k);
+            }}
+          >
+            <View style={styles.sheetIconWrap}>
+              <Ionicons
+                name="cloud-upload-outline"
+                size={22}
+                color={colors.brand[400]}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sheetItemTitle}>Загрузить новый</Text>
+              <Text style={styles.sheetItemSub}>Выбрать из галереи</Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={colors.text.muted}
+            />
+          </Pressable>
+          {pickerHasMedia ? (
+            <Pressable
+              style={[styles.sheetItem, styles.sheetItemDanger]}
+              onPress={() => {
+                const k = pickerOpen;
+                setPickerOpen(null);
+                if (k) void removeMedia(k);
+              }}
+            >
+              <View
+                style={[
+                  styles.sheetIconWrap,
+                  { backgroundColor: "rgba(239,68,68,0.15)" },
+                ]}
+              >
+                <Ionicons
+                  name="trash-outline"
+                  size={20}
+                  color="#ef4444"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[styles.sheetItemTitle, { color: "#ef4444" }]}
+                >
+                  Удалить
+                </Text>
+                <Text style={styles.sheetItemSub}>
+                  Вернуть стандартное оформление
+                </Text>
+              </View>
+            </Pressable>
+          ) : null}
+          <Pressable
+            style={styles.sheetCancel}
+            onPress={() => setPickerOpen(null)}
+          >
+            <Text style={styles.sheetCancelText}>Отмена</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+    </>
   );
 }
 
@@ -504,5 +586,77 @@ const styles = StyleSheet.create({
     color: colors.text.faint,
     fontSize: 11,
     paddingHorizontal: spacing.lg,
+  },
+  sheetBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: colors.bg.panel,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 10,
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.bg.border,
+    marginBottom: 12,
+  },
+  sheetTitle: {
+    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  sheetHint: {
+    color: colors.text.muted,
+    fontSize: 12,
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  sheetItem: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: colors.bg.elevated,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+  },
+  sheetItemDanger: {},
+  sheetIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(241,93,80,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetItemTitle: {
+    color: colors.text.primary,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  sheetItemSub: {
+    color: colors.text.muted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  sheetCancel: {
+    marginTop: 12,
+    alignItems: "center",
+    paddingVertical: 12,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radius.md,
+  },
+  sheetCancelText: {
+    color: colors.text.primary,
+    fontSize: 15,
+    fontWeight: "700",
   },
 });
