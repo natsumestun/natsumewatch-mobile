@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { TouchableScale } from "./TouchableScale";
 import { colors, radius, spacing } from "../theme/colors";
 import { posterUrl } from "../api/posters";
 import type { ReleaseSummary } from "../api/types";
@@ -17,7 +18,7 @@ export function PosterListItem({
   const url = posterUrl(r.poster, "preview") || posterUrl(r.poster, "src");
   const score = (r as unknown as { score?: number | null }).score;
   return (
-    <Pressable onPress={onPress} style={styles.row}>
+    <TouchableScale onPress={onPress} style={styles.row} scaleTo={0.98}>
       {typeof index === "number" ? (
         <Text style={styles.index}>{index + 1}</Text>
       ) : null}
@@ -65,7 +66,7 @@ export function PosterListItem({
           </Text>
         ) : null}
       </View>
-    </Pressable>
+    </TouchableScale>
   );
 }
 

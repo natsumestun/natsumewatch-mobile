@@ -22,6 +22,7 @@ import type {
 } from "../api/types";
 import { colors, radius, spacing } from "../theme/colors";
 import { PosterListItem } from "../components/PosterListItem";
+import { TouchableScale } from "../components/TouchableScale";
 import {
   CatalogFilterModal,
   DEFAULT_FILTER,
@@ -41,54 +42,96 @@ type Tab = {
   matches: (v: CatalogFilterValue) => boolean;
 };
 
+const FRESH_SORT = "FRESH_AT_DESC";
+
 const TABS: Tab[] = [
   {
     key: "all",
     label: "Все",
-    patch: (v) => ({ ...v, publishStatuses: [], types: [] }),
-    matches: (v) => v.publishStatuses.length === 0 && v.types.length === 0,
+    patch: (v) => ({
+      ...v,
+      publishStatuses: [],
+      types: [],
+      sorting: FRESH_SORT,
+    }),
+    matches: (v) =>
+      v.publishStatuses.length === 0 &&
+      v.types.length === 0 &&
+      v.sorting === FRESH_SORT,
   },
   {
     key: "ongoing",
     label: "Онгоинги",
-    patch: (v) => ({ ...v, publishStatuses: ["IS_ONGOING"], types: [] }),
+    patch: (v) => ({
+      ...v,
+      publishStatuses: ["IS_ONGOING"],
+      types: [],
+      sorting: FRESH_SORT,
+    }),
     matches: (v) =>
       v.publishStatuses.length === 1 &&
       v.publishStatuses[0] === "IS_ONGOING" &&
-      v.types.length === 0,
+      v.types.length === 0 &&
+      v.sorting === FRESH_SORT,
   },
   {
     key: "finished",
     label: "Завершённые",
-    patch: (v) => ({ ...v, publishStatuses: ["IS_NOT_ONGOING"], types: [] }),
+    patch: (v) => ({
+      ...v,
+      publishStatuses: ["IS_NOT_ONGOING"],
+      types: [],
+      sorting: FRESH_SORT,
+    }),
     matches: (v) =>
       v.publishStatuses.length === 1 &&
       v.publishStatuses[0] === "IS_NOT_ONGOING" &&
-      v.types.length === 0,
+      v.types.length === 0 &&
+      v.sorting === FRESH_SORT,
   },
   {
     key: "movies",
     label: "Фильмы",
-    patch: (v) => ({ ...v, publishStatuses: [], types: ["MOVIE"] }),
+    patch: (v) => ({
+      ...v,
+      publishStatuses: [],
+      types: ["MOVIE"],
+      sorting: FRESH_SORT,
+    }),
     matches: (v) =>
       v.types.length === 1 &&
       v.types[0] === "MOVIE" &&
-      v.publishStatuses.length === 0,
+      v.publishStatuses.length === 0 &&
+      v.sorting === FRESH_SORT,
   },
   {
     key: "ova",
     label: "OVA",
-    patch: (v) => ({ ...v, publishStatuses: [], types: ["OVA"] }),
+    patch: (v) => ({
+      ...v,
+      publishStatuses: [],
+      types: ["OVA"],
+      sorting: FRESH_SORT,
+    }),
     matches: (v) =>
       v.types.length === 1 &&
       v.types[0] === "OVA" &&
-      v.publishStatuses.length === 0,
+      v.publishStatuses.length === 0 &&
+      v.sorting === FRESH_SORT,
   },
   {
     key: "popular",
     label: "Популярное",
-    patch: (v) => ({ ...v, sorting: "RATING_DESC" }),
-    matches: (v) => v.sorting === "RATING_DESC",
+    patch: (v) => ({
+      ...v,
+      publishStatuses: [],
+      types: [],
+      sorting: "RATING_DESC",
+    }),
+    matches: (v) =>
+      v.sorting === "RATING_DESC" &&
+      v.publishStatuses.length === 0 &&
+      v.types.length === 0,
   },
 ];
 
@@ -188,10 +231,11 @@ export function CatalogScreen({ route }: Props) {
               <Ionicons name="close-circle" size={18} color={colors.text.muted} />
             </Pressable>
           ) : null}
-          <Pressable
+          <TouchableScale
             onPress={() => setFilterOpen(true)}
             style={styles.filterBtn}
             hitSlop={4}
+            scaleTo={0.9}
           >
             <Ionicons
               name="options-outline"
@@ -203,7 +247,7 @@ export function CatalogScreen({ route }: Props) {
                 <Text style={styles.badgeText}>{activeCount}</Text>
               </View>
             ) : null}
-          </Pressable>
+          </TouchableScale>
         </View>
 
         <FlatList
@@ -215,14 +259,15 @@ export function CatalogScreen({ route }: Props) {
           renderItem={({ item: t }) => {
             const active = t.matches(filter);
             return (
-              <Pressable
+              <TouchableScale
                 onPress={() => setFilter((v) => t.patch(v))}
                 style={[styles.tab, active && styles.tabActive]}
+                scaleTo={0.92}
               >
                 <Text style={[styles.tabText, active && styles.tabTextActive]}>
                   {t.label}
                 </Text>
-              </Pressable>
+              </TouchableScale>
             );
           }}
           ItemSeparatorComponent={() => <View style={{ width: 6 }} />}

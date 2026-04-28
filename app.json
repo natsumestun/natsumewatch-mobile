@@ -3,7 +3,7 @@
     "name": "NatsumeWatch",
     "slug": "natsumewatch",
     "scheme": "natsumewatch",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.natsumewatch.app",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a0613"
@@ -45,6 +45,12 @@
         "expo-image-picker",
         {
           "photosPermission": "Чтобы загрузить аватар или баннер, разрешите доступ к фото."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#a855f7"
         }
       ]
     ],

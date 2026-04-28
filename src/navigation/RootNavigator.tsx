@@ -13,6 +13,7 @@ import { ChatScreen } from "../screens/ChatScreen";
 import { TorrentsScreen } from "../screens/TorrentsScreen";
 import { CommentsScreen } from "../screens/CommentsScreen";
 import { ReviewsScreen } from "../screens/ReviewsScreen";
+import { NotificationsScreen } from "../screens/NotificationsScreen";
 import type { RootStackParamList } from "./types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -50,6 +51,7 @@ export function RootNavigator() {
       <Stack.Screen name="Torrents" component={TorrentsScreen} />
       <Stack.Screen name="Comments" component={CommentsScreen} />
       <Stack.Screen name="Reviews" component={ReviewsScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
     </Stack.Navigator>
   );
 }

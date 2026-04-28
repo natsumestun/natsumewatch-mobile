@@ -30,6 +30,8 @@ import { DubSwitcher } from "../components/DubSwitcher";
 import { EpisodeGrid } from "../components/EpisodeGrid";
 import { RatingsBar } from "../components/RatingsBar";
 import { ListPicker } from "../components/ListPicker";
+import { TouchableScale } from "../components/TouchableScale";
+import { SubscribeBell } from "../components/SubscribeBell";
 import { useAuth } from "../store/auth";
 import type { RootStackParamList } from "../navigation/types";
 
@@ -192,6 +194,13 @@ export function AnimeScreen({ route, navigation }: Props) {
         >
           <Ionicons name="chevron-back" size={22} color="#fff" />
         </Pressable>
+        <SubscribeBell
+          releaseId={Number(release.id)}
+          alias={release.alias ?? null}
+          title={release.name.main}
+          poster={release.poster?.optimized?.preview ?? release.poster?.src ?? null}
+          topInset={insets.top}
+        />
         <View style={styles.heroBottom}>
           <View style={styles.tags}>
             <View
