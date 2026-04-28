@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,6 +26,20 @@ export function PlayerScreen({ route, navigation }: Props) {
     sourceStudio,
   } = route.params;
   const me = useAuth((s) => s.user);
+  const [overlayVisible, setOverlayVisible] = useState(true);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function scheduleHide() {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setOverlayVisible(false), 3500);
+  }
+
+  useEffect(() => {
+    scheduleHide();
+    return () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+  }, []);
 
   const player = useVideoPlayer({ uri: hls }, (p) => {
     p.loop = false;
@@ -77,18 +91,28 @@ export function PlayerScreen({ route, navigation }: Props) {
         allowsPictureInPicture
         nativeControls
       />
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+      {overlayVisible ? (
+        <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            hitSlop={10}
+            style={styles.backBtn}
+          >
+            <Ionicons name="chevron-back" size={22} color="#fff" />
+          </Pressable>
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+        </View>
+      ) : (
         <Pressable
-          onPress={() => navigation.goBack()}
-          hitSlop={10}
-          style={styles.backBtn}
-        >
-          <Ionicons name="chevron-back" size={22} color="#fff" />
-        </Pressable>
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-      </View>
+          style={[styles.peekZone, { height: insets.top + 56 }]}
+          onPress={() => {
+            setOverlayVisible(true);
+            scheduleHide();
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -111,7 +135,13 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: spacing.lg,
     paddingBottom: 8,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.85)",
+  },
+  peekZone: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
   },
   backBtn: {
     width: 36,

@@ -58,7 +58,11 @@ export function ChatScreen({ route, navigation }: Props) {
 
   useEffect(() => {
     if (messages.length) {
-      requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: false }));
+      requestAnimationFrame(() => {
+        try {
+          listRef.current?.scrollToEnd({ animated: false });
+        } catch {}
+      });
     }
   }, [messages.length]);
 
@@ -72,7 +76,7 @@ export function ChatScreen({ route, navigation }: Props) {
         <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
           <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
         </Pressable>
-        <Text style={styles.title}>{data?.peer.username || username}</Text>
+        <Text style={styles.title}>{data?.user?.username || username}</Text>
       </View>
 
       {isLoading ? (

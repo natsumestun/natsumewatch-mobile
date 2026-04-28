@@ -37,6 +37,28 @@ export class ApiError extends Error {
   }
 }
 
+function formatDetail(detail: unknown, statusText: string): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((d) => {
+        if (!d || typeof d !== "object") return null;
+        const obj = d as { msg?: unknown; loc?: unknown };
+        return typeof obj.msg === "string" ? obj.msg : null;
+      })
+      .filter((s): s is string => Boolean(s));
+    if (parts.length) return parts.join("; ");
+  }
+  if (detail && typeof detail === "object") {
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      return statusText;
+    }
+  }
+  return statusText;
+}
+
 export type FetchOptions = RequestInit & { skipAuth?: boolean };
 
 export async function apiFetch<T = unknown>(
@@ -64,10 +86,13 @@ export async function apiFetch<T = unknown>(
     }
   }
   if (!res.ok) {
-    const detail =
-      (data && typeof data === "object" && "detail" in data
-        ? String((data as { detail: unknown }).detail)
-        : null) || res.statusText;
+    const rawDetail =
+      data && typeof data === "object" && "detail" in data
+        ? (data as { detail: unknown }).detail
+        : null;
+    const detail = rawDetail
+      ? formatDetail(rawDetail, res.statusText)
+      : res.statusText;
     throw new ApiError(res.status, detail, data);
   }
   return data as T;
@@ -115,10 +140,13 @@ export async function uploadMultipart<T = unknown>(
     }
   }
   if (!res.ok) {
-    const detail =
+    const rawDetail =
       data && typeof data === "object" && "detail" in data
-        ? String((data as { detail: unknown }).detail)
-        : res.statusText;
+        ? (data as { detail: unknown }).detail
+        : null;
+    const detail = rawDetail
+      ? formatDetail(rawDetail, res.statusText)
+      : res.statusText;
     throw new ApiError(res.status, detail, data);
   }
   return data as T;
