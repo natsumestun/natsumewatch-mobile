@@ -17,6 +17,7 @@ import { apiFetch } from "../api/client";
 import type { HistoryEntryOut } from "../api/types";
 import { posterAbs } from "../api/posters";
 import { colors, radius, spacing } from "../theme/colors";
+import { formatRelative } from "../utils/format";
 import type { RootStackParamList } from "../navigation/types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "History">;
@@ -145,19 +146,6 @@ export function HistoryScreen({ navigation }: Props) {
       )}
     </View>
   );
-}
-
-function formatRelative(iso: string): string {
-  const t = new Date(iso).getTime();
-  const diff = Date.now() - t;
-  const m = Math.round(diff / 60000);
-  if (m < 1) return "только что";
-  if (m < 60) return `${m} мин назад`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `${h} ч назад`;
-  const d = Math.round(h / 24);
-  if (d < 30) return `${d} дн назад`;
-  return new Date(iso).toLocaleDateString();
 }
 
 const styles = StyleSheet.create({

@@ -10,7 +10,7 @@ export type PosterCardProps = {
   width?: number;
 };
 
-export function PosterCard({ release: r, onPress, width = 140 }: PosterCardProps) {
+export function PosterCard({ release: r, onPress, width = 120 }: PosterCardProps) {
   const height = Math.round((width * 3) / 2);
   const url = posterUrl(r.poster, "preview") || posterUrl(r.poster, "src");
   return (

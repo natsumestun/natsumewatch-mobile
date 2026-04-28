@@ -49,7 +49,7 @@ export function Hero({
     return () => clearInterval(t);
   }, [list.length, fade]);
 
-  const heroHeight = Math.min(Math.round(width * 1.05), 560);
+  const heroHeight = Math.min(Math.round(width * 0.85), 460);
 
   if (list.length === 0) {
     return <View style={[styles.skeleton, { height: heroHeight }]} />;

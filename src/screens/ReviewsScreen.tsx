@@ -3,7 +3,9 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -21,6 +23,7 @@ import { apiFetch, resolveMediaUrl } from "../api/client";
 import { useAuth } from "../store/auth";
 import type { ReviewOut } from "../api/types";
 import { colors, radius, spacing } from "../theme/colors";
+import { formatDate } from "../utils/format";
 import type { RootStackParamList } from "../navigation/types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Reviews">;
@@ -103,7 +106,10 @@ export function ReviewsScreen({ route, navigation }: Props) {
       )}
 
       <Modal animationType="slide" transparent visible={open} onRequestClose={() => setOpen(false)}>
-        <View style={styles.modalBack}>
+        <KeyboardAvoidingView
+          style={styles.modalBack}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 16 }]}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Новая рецензия</Text>
@@ -188,7 +194,7 @@ export function ReviewsScreen({ route, navigation }: Props) {
               </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -208,7 +214,7 @@ function ReviewCard({ r }: { r: ReviewOut }) {
         )}
         <View style={{ flex: 1 }}>
           <Text style={styles.username}>{r.user.username}</Text>
-          <Text style={styles.date}>{new Date(r.created_at).toLocaleDateString()}</Text>
+          <Text style={styles.date}>{formatDate(r.created_at)}</Text>
         </View>
         <View style={styles.scoreBadge}>
           <Ionicons name="star" size={12} color="#facc15" />

@@ -150,7 +150,8 @@ export function ChatScreen({ route, navigation }: Props) {
 }
 
 function formatTime(iso: string) {
-  const d = new Date(iso);
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
+  const d = new Date(hasTz ? iso : `${iso}Z`);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 

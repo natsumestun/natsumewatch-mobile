@@ -18,6 +18,39 @@ export function formatTime(seconds: number): string {
   return `${mm}:${ss}`;
 }
 
+export function parseServerTs(iso: string | null | undefined): number {
+  if (!iso) return NaN;
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
+  const normalized = hasTz ? iso : `${iso}Z`;
+  return new Date(normalized).getTime();
+}
+
+export function formatDateTime(iso: string | null | undefined): string {
+  const t = parseServerTs(iso);
+  if (!Number.isFinite(t)) return "";
+  return new Date(t).toLocaleString();
+}
+
+export function formatDate(iso: string | null | undefined): string {
+  const t = parseServerTs(iso);
+  if (!Number.isFinite(t)) return "";
+  return new Date(t).toLocaleDateString();
+}
+
+export function formatRelative(iso: string | null | undefined): string {
+  const t = parseServerTs(iso);
+  if (!Number.isFinite(t)) return "";
+  const diff = Math.max(0, Date.now() - t);
+  const m = Math.round(diff / 60000);
+  if (m < 1) return "только что";
+  if (m < 60) return `${m} мин назад`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} ч назад`;
+  const d = Math.round(h / 24);
+  if (d < 30) return `${d} дн назад`;
+  return new Date(t).toLocaleDateString();
+}
+
 export function dubLabel(
   source: { provider: string; studio: string; language?: string; kind?: string },
 ): string {
