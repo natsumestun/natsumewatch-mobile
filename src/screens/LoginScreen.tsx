@@ -28,6 +28,46 @@ type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
 WebBrowser.maybeCompleteAuthSession();
 
+const TOKEN_KEYS = [
+  "auth_token",
+  "access_token",
+  "token",
+  "jwt",
+];
+
+function parseKeyValueString(s: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!s) return out;
+  for (const part of s.split("&")) {
+    if (!part) continue;
+    const idx = part.indexOf("=");
+    const key = idx >= 0 ? part.slice(0, idx) : part;
+    const val = idx >= 0 ? part.slice(idx + 1) : "";
+    try {
+      out[decodeURIComponent(key)] = decodeURIComponent(val.replace(/\+/g, " "));
+    } catch {
+      out[key] = val;
+    }
+  }
+  return out;
+}
+
+function extractAuthToken(rawUrl: string): string {
+  if (!rawUrl) return "";
+  const hashIdx = rawUrl.indexOf("#");
+  const fragment = hashIdx >= 0 ? rawUrl.slice(hashIdx + 1) : "";
+  const queryIdx = rawUrl.indexOf("?");
+  const queryEnd = hashIdx >= 0 ? hashIdx : rawUrl.length;
+  const query = queryIdx >= 0 ? rawUrl.slice(queryIdx + 1, queryEnd) : "";
+  const fragParams = parseKeyValueString(fragment);
+  const queryParams = parseKeyValueString(query);
+  for (const key of TOKEN_KEYS) {
+    if (fragParams[key]) return fragParams[key];
+    if (queryParams[key]) return queryParams[key];
+  }
+  return "";
+}
+
 export function LoginScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const login = useAuth((s) => s.login);
@@ -52,11 +92,7 @@ export function LoginScreen({ navigation }: Props) {
       const startUrl = `${API_BASE}/api/auth/${provider}/start?return_to=${encodeURIComponent(redirect)}`;
       const result = await WebBrowser.openAuthSessionAsync(startUrl, redirect);
       if (result.type === "success" && result.url) {
-        const { queryParams } = Linking.parse(result.url);
-        const token =
-          (queryParams?.token as string) ||
-          (queryParams?.access_token as string) ||
-          "";
+        const token = extractAuthToken(result.url);
         if (!token) {
           throw new Error("Сервер не вернул токен");
         }

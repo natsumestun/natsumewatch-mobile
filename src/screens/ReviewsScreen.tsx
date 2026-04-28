@@ -143,11 +143,14 @@ export function ReviewsScreen({ route, navigation }: Props) {
               <TextInput
                 value={body}
                 onChangeText={setBody}
-                placeholder="Текст рецензии"
+                placeholder="Текст рецензии (минимум 10 символов)"
                 placeholderTextColor={colors.text.faint}
                 style={[styles.field, { minHeight: 140, textAlignVertical: "top" }]}
                 multiline
               />
+              <Text style={styles.scoreLabel}>
+                {body.trim().length}/10000 символов
+              </Text>
             </ScrollView>
             <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
               <Pressable
@@ -160,10 +163,22 @@ export function ReviewsScreen({ route, navigation }: Props) {
                 style={[
                   styles.modalBtn,
                   styles.modalBtnPrimary,
-                  (!reviewTitle.trim() || !body.trim() || create.isPending) && { opacity: 0.5 },
+                  (reviewTitle.trim().length < 2 ||
+                    body.trim().length < 10 ||
+                    create.isPending) && { opacity: 0.5 },
                 ]}
-                disabled={!reviewTitle.trim() || !body.trim() || create.isPending}
-                onPress={() => create.mutate({ title: reviewTitle.trim(), body: body.trim(), score })}
+                disabled={
+                  reviewTitle.trim().length < 2 ||
+                  body.trim().length < 10 ||
+                  create.isPending
+                }
+                onPress={() =>
+                  create.mutate({
+                    title: reviewTitle.trim(),
+                    body: body.trim(),
+                    score,
+                  })
+                }
               >
                 {create.isPending ? (
                   <ActivityIndicator color="#fff" />

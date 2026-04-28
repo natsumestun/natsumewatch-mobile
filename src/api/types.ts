@@ -291,7 +291,7 @@ export type MessageOut = {
 };
 
 export type ConversationResponse = {
-  peer: UserPublic;
+  user: UserPublic;
   messages: MessageOut[];
 };
 
