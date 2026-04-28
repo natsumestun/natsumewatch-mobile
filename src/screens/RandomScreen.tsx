@@ -22,9 +22,15 @@ export function RandomScreen() {
   const stackNav =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
-  const { data, isFetching, refetch } = useQuery<ReleaseSummary>({
+  const { data, isFetching, refetch } = useQuery<ReleaseSummary | null>({
     queryKey: ["random"],
-    queryFn: () => apiFetch<ReleaseSummary>("/anime/random"),
+    queryFn: async () => {
+      const res = await apiFetch<ReleaseSummary | ReleaseSummary[]>(
+        "/anime/random",
+      );
+      if (Array.isArray(res)) return res[0] ?? null;
+      return res ?? null;
+    },
     staleTime: 0,
     gcTime: 0,
   });

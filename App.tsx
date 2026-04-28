@@ -1,10 +1,13 @@
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts, Rubik_400Regular, Rubik_600SemiBold, Rubik_700Bold, Rubik_800ExtraBold } from "@expo-google-fonts/rubik";
+import * as NavigationBar from "expo-navigation-bar";
+import * as SystemUI from "expo-system-ui";
 
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { useAuth } from "./src/store/auth";
@@ -44,6 +47,20 @@ export default function App() {
   useEffect(() => {
     void init();
   }, [init]);
+
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(colors.bg.base).catch(() => undefined);
+    if (Platform.OS === "android") {
+      void NavigationBar.setBackgroundColorAsync(colors.bg.base).catch(
+        () => undefined,
+      );
+      void NavigationBar.setButtonStyleAsync("light").catch(() => undefined);
+      void NavigationBar.setBehaviorAsync("overlay-swipe").catch(
+        () => undefined,
+      );
+      void NavigationBar.setVisibilityAsync("hidden").catch(() => undefined);
+    }
+  }, []);
 
   if (!fontsLoaded) {
     return <Loading />;
