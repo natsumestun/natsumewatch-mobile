@@ -17,8 +17,12 @@ import { apiFetch } from "../api/client";
 import type { HistoryEntryOut } from "../api/types";
 import { posterAbs } from "../api/posters";
 import { colors, radius, spacing } from "../theme/colors";
-import { formatRelative } from "../utils/format";
+import { formatRelative, formatTime } from "../utils/format";
+import { getPositionsMap, positionKey } from "../utils/playbackPositions";
 import type { RootStackParamList } from "../navigation/types";
+import { useEffect, useState } from "react";
+
+type PositionInfo = { position: number; duration: number };
 
 type Props = NativeStackScreenProps<RootStackParamList, "History">;
 
@@ -45,6 +49,31 @@ export function HistoryScreen({ navigation }: Props) {
   });
 
   const items = data ?? [];
+
+  const [positions, setPositions] = useState<Record<string, PositionInfo>>({});
+  useEffect(() => {
+    if (!items.length) return;
+    let cancelled = false;
+    void (async () => {
+      const map = await getPositionsMap(
+        items.map((i) => ({
+          releaseId: i.release_id,
+          episodeOrdinal: i.episode_ordinal,
+          sourceProvider: i.source_provider,
+          sourceStudio: i.source_studio,
+        })),
+      );
+      if (cancelled) return;
+      const out: Record<string, PositionInfo> = {};
+      map.forEach((v, k) => {
+        out[k] = { position: v.position, duration: v.duration };
+      });
+      setPositions(out);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -124,6 +153,43 @@ export function HistoryScreen({ navigation }: Props) {
                   Эпизод {item.episode_ordinal}
                   {item.source_studio ? ` · ${item.source_studio}` : ""}
                 </Text>
+                {(() => {
+                  const key = positionKey({
+                    releaseId: item.release_id,
+                    episodeOrdinal: item.episode_ordinal,
+                    sourceProvider: item.source_provider,
+                    sourceStudio: item.source_studio,
+                  });
+                  const pos = key ? positions[key] : null;
+                  if (!pos || !pos.position) return null;
+                  const finished = pos.duration && pos.position >= pos.duration - 15;
+                  return (
+                    <View style={styles.progressWrap}>
+                      <View style={styles.progressBar}>
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: pos.duration
+                                ? `${Math.min(100, (pos.position / pos.duration) * 100)}%`
+                                : "0%",
+                              backgroundColor: finished
+                                ? colors.brand[400]
+                                : colors.brand[500],
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.progressText}>
+                        {finished
+                          ? "Просмотрено полностью"
+                          : `Остановка на ${formatTime(pos.position)}${
+                              pos.duration ? ` / ${formatTime(pos.duration)}` : ""
+                            }`}
+                      </Text>
+                    </View>
+                  );
+                })()}
                 <Text style={styles.dateText}>
                   {formatRelative(item.watched_at)}
                 </Text>
@@ -183,6 +249,24 @@ const styles = StyleSheet.create({
   rowText: {
     flex: 1,
     gap: 4,
+  },
+  progressWrap: {
+    gap: 4,
+    marginTop: 2,
+  },
+  progressBar: {
+    height: 3,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    borderRadius: 2,
+  },
+  progressText: {
+    color: colors.text.muted,
+    fontSize: 11,
   },
   releaseTitle: {
     color: colors.text.primary,
