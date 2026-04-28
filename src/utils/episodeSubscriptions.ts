@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { apiFetch } from "../api/client";
-import { presentLocalNotification } from "./notifications";
+import { loadPrefs, presentLocalNotification } from "./notifications";
 
 const SUBS_KEY = "subs:anime:v1";
 const COUNTS_KEY = "subs:counts:v1";
@@ -98,6 +98,8 @@ type ReleaseDetail = {
  * comes to the foreground.
  */
 export async function checkSubscriptionsForNewEpisodes(): Promise<void> {
+  const prefs = await loadPrefs();
+  if (!prefs.enabled || !prefs.newEpisodes) return;
   const subs = await loadSubscriptions();
   if (!subs.length) return;
   const counts = await loadCounts();
